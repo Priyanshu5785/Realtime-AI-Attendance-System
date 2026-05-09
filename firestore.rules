@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isEmailVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Students Collection ---
+    match /students/{studentId} {
+      function isValidStudent(data) {
+        return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+            && data.photo is string && data.photo.size() <= 2000000 // ~2MB for base64 photo
+            && data.createdAt is timestamp;
+      }
+
+      // Allow authenticated users to read and manage student records
+      allow read: if isSignedIn();
+      allow create: if isEmailVerified() && isValidStudent(incoming()) && incoming().createdAt == request.time;
+      allow delete: if isEmailVerified();
+      // Students are usually not updated in this app, but if they were:
+      allow update: if false; 
+    }
+
+    // --- Attendance Collection ---
+    match /attendance/{attendanceId} {
+      function isValidAttendance(data) {
+        return data.studentId is string && data.studentId.size() <= 128
+            && data.studentName is string && data.studentName.size() <= 100
+            && data.timestamp is timestamp
+            && data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$');
+      }
+
+      // Allow reading today's attendance logs
+      allow list: if isSignedIn() && resource.data.date == request.query.limit(100).where('date', '==', request.time.date().toString()).data.date;
+      // Simplified read for UI simplicity while maintaining common sense security
+      allow read: if isSignedIn(); 
+      
+      allow create: if isEmailVerified() 
+                   && isValidAttendance(incoming()) 
+                   && incoming().timestamp == request.time;
+      
+      allow update, delete: if false; // Logs are immutable
+    }
+  }
+}

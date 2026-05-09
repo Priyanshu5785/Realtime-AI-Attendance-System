@@ -1,0 +1,8 @@
+{
+  "name": "AI Attendance Pro",
+  "description": "An AI-powered attendance system using face recognition to track student attendance in real-time.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}

@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Student record with face identifying photo",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "photo": { "type": "string", "description": "Base64 encoded student face photo" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "photo"]
+    },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "Daily attendance record for a student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "date": { "type": "string" }
+      },
+      "required": ["studentId", "studentName", "timestamp"]
+    }
+  },
+  "firestore": {
+    "students": {
+      "schema": "Student",
+      "description": "Collection of students"
+    },
+    "attendance": {
+      "schema": "AttendanceRecord",
+      "description": "Collection of attendance records"
+    }
+  }
+}
